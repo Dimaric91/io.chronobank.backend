@@ -1,5 +1,8 @@
 var _ = require('lodash')
 
+const keystone = require('keystone')
+const jwt = require('jsonwebtoken')
+
 /**
 	Initialises the standard view locals
 */
@@ -33,5 +36,34 @@ exports.requireUser = function (req, res, next) {
     res.redirect('/keystone/signin')
   } else {
     next()
+  }
+}
+
+exports.checkToken = function (req, res, next) {
+  var token = req.body.token || req.query.token || req.headers['x-access-token']
+  
+  if (token) {
+    jwt.verify(token, keystone.get('secret'), function (err, decoded) {      
+      if (err) {
+        return res.send({ 
+          success: false, 
+          message: 'Failed to authenticate token.' })    
+      } else if (!decoded.admin) {
+        res.status(403).send({
+          success: false,
+          message: 'No privileges'
+        })
+      } else {
+        req.decoded = decoded
+        next()
+      }
+    })
+
+  } else {
+    return res.status(403).send({ 
+      success: false, 
+      message: 'No token provided.' 
+    })
+
   }
 }

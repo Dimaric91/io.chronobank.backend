@@ -1,5 +1,6 @@
 const keystone = require('keystone')
 const middleware = require('./middleware')
+const jwt = require('jsonwebtoken')
 const restful = require('restful-keystone')(keystone, {
   root: '/api/v1',
 })
@@ -12,6 +13,7 @@ const Header = keystone.list('Header')
 const Story = keystone.list('Story')
 const FaqTopic = keystone.list('FaqTopic')
 const FaqQuestion = keystone.list('FaqQuestion')
+const User = keystone.list('User')
 
 const FaqQuestionIndex = require('../index/FaqQuestionIndex')
 
@@ -126,6 +128,45 @@ exports = module.exports = function (app) {
     })))
   })
 
+  app.get('/api/v1/users', middleware.checkToken, async (req, res) => {
+    const users = await User.model.find().exec()
+    res.send({
+      success: true,
+      users: users
+    })
+  })
+
+  app.post('/api/v1/authenticate', async (req, res) => {
+    User.model.findOne({
+      email : req.body.email
+    })
+    .exec(function (err, user) {
+      if (err || !user) {
+        return res.send({
+          success: false,
+          message: 'User not found.'
+        })
+      }
+      user._.password.compare(req.body.password, function (err, isMatch) {
+        if (err || !isMatch) {
+          res.send({ success: false, message: 'Authentication failed. Wrong password.' })
+        } else {
+          var payload = {
+            admin: user.isAdmin
+          }
+          var token = jwt.sign(payload, keystone.get('secret'), {
+            expiresIn: 3600
+          })
+          
+          res.send({
+            success: true,
+            token: token
+          })
+        }
+      })
+    })
+  })
+
   restful.expose({
     Article: {
       methods: ['list', 'retrieve']
@@ -165,5 +206,6 @@ exports = module.exports = function (app) {
     Testimonial: {
       methods: ['list', 'retrieve'],
     }
-  }).start()
+  })
+  .start()
 }
