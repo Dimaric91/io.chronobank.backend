@@ -43,6 +43,11 @@ exports = module.exports = function (app) {
     res.redirect('/keystone/')
   })
 
+  app.get('/api/v1/swagger.json', function (req, res) {
+    res.setHeader('Content-Type', 'application/json')
+    res.send(keystone.get('swaggerSpec'))
+  })
+
   app.get('/api/v1/products/s/:slug', async (req, res) => {
     const product = await Product.model
       .findOne({
@@ -128,6 +133,65 @@ exports = module.exports = function (app) {
     })))
   })
 
+  /**
+   * @swagger
+   * definition:
+   *   Name:
+   *     properties:
+   *       first:
+   *         type: string
+   *       last:
+   *         type: string
+   *   User:
+   *     properties:
+   *       name:
+   *         $ref: '#/definitions/Name'
+   *       email:
+   *         type: string
+   *       password:
+   *         type: string
+   *         format: password
+   *       isAdmin:
+   *         type: boolean
+   *   UsersResponse:
+   *     properties:
+   *       success:
+   *         type: boolean
+   *       users:
+   *         type: array
+   *         items:
+   *           $ref: '#/definitions/User'
+   */
+  /**
+   * @swagger
+   * /api/v1/users:
+   *   get:
+   *     tags:
+   *       - All Users
+   *     description: Returns all users
+   *     produces:
+   *       - application/json
+   *     responses:
+   *       200:
+   *         description: An array of Users
+   *         schema: 
+   *           $ref: '#/definitions/UsersResponse'
+   *       403:
+   *         description: Token error
+   *         schema:
+   *           properties:
+   *             success:
+   *               type: boolean
+   *             message:
+   *               type: string
+   *     parameters:
+   *     - name: x-access-token
+   *       in: header
+   *       description: authorization token
+   *       required: false
+   *       schema:
+   *         type: string
+   */
   app.get('/api/v1/users', middleware.checkToken, async (req, res) => {
     const users = await User.model.find().exec()
     res.send({

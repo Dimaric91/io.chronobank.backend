@@ -4,10 +4,25 @@ require('dotenv').config()
 
 // Require keystone
 var keystone = require('keystone')
+var swaggerJSDoc = require('swagger-jsdoc')
 
 // Initialise Keystone with your project's configuration.
 // See http://keystonejs.com/guide/config for available options
 // and documentation.
+
+var swaggerDefinition = {
+  info: {
+    title: 'Chronobank API',
+    version: '1.0.0',
+  },
+  host: 'localhost:3000',
+  basePath: '/',
+}
+
+var options = {
+  swaggerDefinition: swaggerDefinition,
+  apis: ['./routes/index.js'],
+}
 
 keystone.init({
   'name': 'backend.chronobank.io',
@@ -22,7 +37,8 @@ keystone.init({
   'session': true,
   'auth': true,
   'user model': 'User',
-  'secret': 'testSecret'
+  'secret': 'testSecret',
+  'swaggerSpec': swaggerJSDoc(options)
 })
 
 // Load your project's Models
