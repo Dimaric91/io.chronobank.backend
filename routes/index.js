@@ -1,9 +1,10 @@
 const keystone = require('keystone')
 const middleware = require('./middleware')
-const jwt = require('jsonwebtoken')
 const restful = require('restful-keystone')(keystone, {
   root: '/api/v1',
 })
+const SignInService = require('./signin/SignInService')
+const UserService = require('./users/UserService')
 
 const Product = keystone.list('Product')
 const Enquiry = keystone.list('Enquiry')
@@ -13,7 +14,6 @@ const Header = keystone.list('Header')
 const Story = keystone.list('Story')
 const FaqTopic = keystone.list('FaqTopic')
 const FaqQuestion = keystone.list('FaqQuestion')
-const User = keystone.list('User')
 
 const FaqQuestionIndex = require('../index/FaqQuestionIndex')
 
@@ -25,7 +25,7 @@ keystone.pre('render', middleware.flashMessages)
 exports = module.exports = function (app) {
 
   // eslint-disable-next-line
-  function errorHandler (err, req, res, next) { // Forced to have 4 arguments due to express convension about error handlers
+  function errorHandler(err, req, res, next) { // Forced to have 4 arguments due to express convension about error handlers
     // eslint-disable-next-line
     console.log(err)
     res.status(500).send('error', { error: err })
@@ -136,6 +136,12 @@ exports = module.exports = function (app) {
   /**
    * @swagger
    * definition:
+   *   ErrorResponse:
+   *     properties:
+   *       success:
+   *         type: boolean
+   *       message:
+   *         type: string
    *   Name:
    *     properties:
    *       first:
@@ -144,13 +150,12 @@ exports = module.exports = function (app) {
    *         type: string
    *   User:
    *     properties:
+   *       _id:
+   *         type: string
    *       name:
    *         $ref: '#/definitions/Name'
    *       email:
    *         type: string
-   *       password:
-   *         type: string
-   *         format: password
    *       isAdmin:
    *         type: boolean
    *   UsersResponse:
@@ -161,13 +166,10 @@ exports = module.exports = function (app) {
    *         type: array
    *         items:
    *           $ref: '#/definitions/User'
-   */
-  /**
-   * @swagger
    * /api/v1/users:
    *   get:
    *     tags:
-   *       - All Users
+   *       - Users
    *     description: Returns all users
    *     produces:
    *       - application/json
@@ -179,11 +181,11 @@ exports = module.exports = function (app) {
    *       403:
    *         description: Token error
    *         schema:
-   *           properties:
-   *             success:
-   *               type: boolean
-   *             message:
-   *               type: string
+   *           $ref: '#/definitions/ErrorResponse'
+   *       404:
+   *         description: No users
+   *         schema:
+   *           $ref: '#/definitions/ErrorResponse'
    *     parameters:
    *     - name: x-access-token
    *       in: header
@@ -193,42 +195,48 @@ exports = module.exports = function (app) {
    *         type: string
    */
   app.get('/api/v1/users', middleware.checkToken, async (req, res) => {
-    const users = await User.model.find().exec()
-    res.send({
-      success: true,
-      users: users
-    })
+    await UserService.getAllUsers(req, res)
   })
 
-  app.post('/api/v1/authenticate', async (req, res) => {
-    User.model.findOne({
-      email : req.body.email
-    })
-    .exec(function (err, user) {
-      if (err || !user) {
-        return res.send({
-          success: false,
-          message: 'User not found.'
-        })
-      }
-      user._.password.compare(req.body.password, function (err, isMatch) {
-        if (err || !isMatch) {
-          res.send({ success: false, message: 'Authentication failed. Wrong password.' })
-        } else {
-          var payload = {
-            admin: user.isAdmin
-          }
-          var token = jwt.sign(payload, keystone.get('secret'), {
-            expiresIn: 3600
-          })
-          
-          res.send({
-            success: true,
-            token: token
-          })
-        }
-      })
-    })
+  /**
+   * @swagger
+   * /api/v1/signin:
+   *   post:
+   *     tags:
+   *       - SignIn
+   *     description: sign in for api
+   *     produces:
+   *       - application/json
+   *     responses:
+   *       200:
+   *         description: Success response
+   *         schema: 
+   *           properties:
+   *             success:
+   *               type: string
+   *             token:
+   *               type: string
+   *       400:
+   *         description: Token error
+   *         schema:
+   *           $ref: '#/definitions/ErrorResponse'
+   *     consumes: 
+   *       - application/json
+   *     parameters:
+   *     - name: Auth object
+   *       in: body
+   *       description: Auth object
+   *       required: true
+   *       schema:
+   *         type: object
+   *         properties:
+   *           email:
+   *             type: string
+   *           password:
+   *             type: string
+   */
+  app.post('/api/v1/signin', async (req, res) => {
+    return SignInService.checkUserAccess(req, res)
   })
 
   restful.expose({
@@ -271,5 +279,5 @@ exports = module.exports = function (app) {
       methods: ['list', 'retrieve'],
     }
   })
-  .start()
+    .start()
 }

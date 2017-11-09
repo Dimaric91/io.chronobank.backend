@@ -1,0 +1,169 @@
+{
+	"info": {
+		"name": "Chronobank API",
+		"_postman_id": "2f0dc026-18dd-4ea0-5f5d-046e66893ecd",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "api",
+			"description": "Folder for api",
+			"item": [
+				{
+					"name": "http://localhost:3000/api/v1/signin success request",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Auth test', function() {",
+									"    pm.response.to.have.status(200);",
+									"    var responseBody = pm.response.json();",
+									"    pm.expect(responseBody.success).to.be.true",
+									"    pm.expect(responseBody.token !== null).to.be.true",
+									"})"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"email\": \"admin@example.com\",\n\t\"password\": \"admin\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/v1/signin",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"v1",
+								"signin"
+							]
+						},
+						"description": "sign in for api"
+					},
+					"response": []
+				},
+				{
+					"name": "http://localhost:3000/api/v1/signin user not found",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Auth test', function() {",
+									"    pm.response.to.have.status(400);",
+									"    var responseBody = pm.response.json();",
+									"    pm.expect(responseBody.success).to.be.false",
+									"    pm.expect(responseBody.message).to.eql(\"User not found.\")",
+									"})"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"email\": \"admin1@example.com\",\n\t\"password\": \"admin\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/v1/signin",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"v1",
+								"signin"
+							]
+						},
+						"description": "sign in for api"
+					},
+					"response": []
+				},
+				{
+					"name": "http://localhost:3000/api/v1/signin wrong password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Auth test', function() {",
+									"    pm.response.to.have.status(400);",
+									"    var responseBody = pm.response.json();",
+									"    pm.expect(responseBody.success).to.be.false",
+									"    pm.expect(responseBody.message).to.eql(\"Authentication failed. Wrong password.\")",
+									"})"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"email\": \"admin@example.com\",\n\t\"password\": \"admin1\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:3000/api/v1/signin",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"api",
+								"v1",
+								"signin"
+							]
+						},
+						"description": "sign in for api"
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

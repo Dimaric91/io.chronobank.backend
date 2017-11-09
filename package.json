@@ -13,6 +13,7 @@
     "jsonwebtoken": "^8.1.0",
     "keystone": "4.0.0-beta.5",
     "lodash": "^4.13.1",
+    "mocha": "^4.0.1",
     "moment": "2.17.1",
     "node-sass": "4.5.3",
     "node-sass-middleware": "0.11.0",
@@ -28,7 +29,8 @@
   "scripts": {
     "dev": "node keystone.js",
     "start": "node keystone.js",
-    "test": "newman run .\\test\\postman_echo_collection.json",
+    "test": "npm run postman:test",
+    "postman:test": "newman run .\\test\\postman\\postman_collections.json",
     "lint": "./node_modules/eslint/bin/eslint.js --ext .js --fix models routes templates updates",
     "lint:test": "./node_modules/eslint/bin/eslint.js --ext .js models routes templates updates"
   }
