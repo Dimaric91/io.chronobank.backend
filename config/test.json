@@ -1,0 +1,6 @@
+{
+  "Keystone": {
+    "port": 3100,
+    "mongoUrl": "mongodb://localhost:27017/test/backend-chronobank-io"
+  }
+}

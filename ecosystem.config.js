@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: 'io.chronobank.backend',
-      script: 'keystone.js',
+      script: 'bin\\www.js',
       watch: true,
       env: {
         'PORT': 3000,
