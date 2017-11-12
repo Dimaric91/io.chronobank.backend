@@ -1,10 +1,30 @@
 const { createApp } = require('../../lib/keystone.js')
+const mongoose = require('mongoose')
+const async = require('async')
 const assert = require('assert')
 const axios = require('axios')
-const app = createApp({ headless: true, logger: null })
+const app = createApp({ headless: true, logger: null, 'auto update': false })
 const backend = axios.create({
-  baseURL: 'http://localhost:'+ app.get('port') + '/api/v1'
+  baseURL: 'http://localhost:' + app.get('port') + '/api/v1'
 })
+
+const users = [{
+  email: 'test@test.local',
+  password: '123',
+  name: {
+    first: 'Test',
+    last: 'Testovich'
+  },
+  isAdmin: false
+}, {
+  email: 'admin@example.com',
+  password: 'admin', 
+  name: {
+    first: 'Admin',
+    last: 'User'
+  },
+  isAdmin: true
+}]
 
 function checkErrorStatusAndMessage (response, expectStatus, expectMessage) {
   const { status, data } = response
@@ -21,16 +41,44 @@ async function getToken (email, password) {
   }).then(function (response) {
     token = response.data.token
   }).catch(function (error) {
-    // eslint-disable-next-line no-console
-    console.log(error.message)
+    assert.fail(error.response.data.message)
   })
 
   assert(token, 'token not specified')
   return token
 }
 
+function createUser (model, done) {
+  var User = app.list('User')
+  var newUser = new User.model(model)
+  newUser.save(function (err) {
+    if (err) {  
+      assert.fail(err)
+    }
+    done()
+  })
+}
+
+function startServerAndCreateUsers (done) {
+  app.start.bind(app)(function () {
+    async.forEach(users, createUser, done)
+  })
+}
+
 describe('Get Users list tests', () => {
-  before(app.start.bind(app))
+  before(function (done) {
+    var conn = mongoose.createConnection(app.get('mongo'), function (err) {
+      conn.db.dropDatabase(function (err) {
+        conn.close(function (err) {
+          if (err) {
+            done(err)
+          } else {
+            startServerAndCreateUsers(done)
+          }
+        })
+      })
+    })
+  })
   after(app.stop.bind(app))
 
   it('Get Users list: success request', async () => {
@@ -52,9 +100,9 @@ describe('Get Users list tests', () => {
 
   it('Get Users list: no token', async () => {
     await backend.get('users')
-    .catch(function (error) {
-      checkErrorStatusAndMessage(error.response, 403, 'No token provided.')
-    })
+      .catch(function (error) {
+        checkErrorStatusAndMessage(error.response, 403, 'No token provided.')
+      })
   })
 
   it('Get Users list: no privileges', async () => {
